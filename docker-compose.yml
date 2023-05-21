@@ -1,0 +1,143 @@
+version: "3"
+
+services:
+  media-proxy:
+    container_name: media-proxy
+    image: nginx
+    volumes:
+      - ./media-stack.conf:/etc/nginx/conf.d/default.conf
+    environment:
+      - VIRTUAL_HOST=${VIRTUAL_HOST}
+    ports:
+      - 8080:80
+    restart: unless-stopped
+    depends_on:
+      - jackett
+      - jellyfin
+      - jellyseerr
+      - prowlarr
+      - radarr
+      - sonarr
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=info
+    ports:
+      - 8191:8191
+    restart: unless-stopped
+
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: jackett
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE:-Etc/UTC}
+      - AUTO_UPDATE=true #optional
+      - RUN_OPTS= #optional
+    volumes:
+      - ${JACKETT_CONFIG}:/config
+      - ${JACKETT_DOWNLOADS}:/data/downloads
+    ports:
+      - 9117:9117
+    restart: unless-stopped
+    depends_on:
+      - flaresolverr
+
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE:-Etc/UTC}
+      # - JELLYFIN_PublishedServerUrl=192.168.0.5 #optional
+    volumes:
+      - ${JELLYFIN_CONFIG}:/config
+      - ${JELLYFIN_TVSHOWS}:/data/tvshows
+      - ${JELLYFIN_MOVIES}:/data/movies
+      - ${JELLYFIN_DOWNLOADS}:/data/downloads
+      # - ${JELLYFIN_DOWNLOADS_TVSHOWS}:/data/downloads/tvshows
+      # - ${JELLYFIN_DOWNLOADS_MOVIES}:/data/downloads/movies
+    ports:
+      - 8096:8096
+      - 8920:8920 #optional
+      - 7359:7359/udp #optional
+      - 1900:1900/udp #optional
+    restart: unless-stopped
+
+  jellyseerr:
+    image: fallenbagel/jellyseerr:develop
+    container_name: jellyseerr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - LOG_LEVEL=${JELLYSEERR_LOG_LEVEL:-debug}
+      - TZ=${TIMEZONE:-Etc/UTC}
+    ports:
+      - 5055:5055
+    volumes:
+      - ${JELLYSEERR_CONFIG}:/app/config
+    restart: unless-stopped
+    depends_on:
+      - radarr
+      - sonarr
+      - jellyfin
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE:-Etc/UTC}
+    volumes:
+      - ${PROWLARR_CONFIG}:/config
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE:-Etc/UTC}
+    volumes:
+      - ${RADARR_CONFIG}:/config
+      - ${RADARR_MOVIES}:/data/movies #optional
+      - ${RADARR_DOWNLOADS}:/data/downloads #optional
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+    depends_on:
+      - jackett
+      - jellyfin
+      - prowlarr
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE:-Etc/UTC}
+    volumes:
+      - ${SONARR_CONFIG}:/config
+      - ${SONARR_TVSHOWS}:/data/tvshows #optional
+      - ${SONARR_DOWNLOADS}:/data/downloads #optional
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+    depends_on:
+      - jackett
+      - jellyfin
+      - prowlarr
+
+networks:
+  default:
+    name: ${PROXY_NETWORK:-mediastack}
+    external: true
