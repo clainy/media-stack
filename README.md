@@ -5,8 +5,7 @@ Home media stack
 - docker network create mediastack
 - cp .env.example .env
 - update .env configuration with directory structure, or update volume with overwritten `docker-compose.override.yml`
-
-
+- uncomment docker-compose.yml `ports` section for each services, setup service base URL to be meet container name. (keep `ports` section commented for security reason)
 - Login to Jackett, Jellyfin, Prowlarr, Radarr, Sonarr using `http://localhost:[ORIGINAL_PORT]`, update their base URL to subfolder accordinglly. Save and restart containers.
 
 
