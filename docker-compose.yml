@@ -12,7 +12,7 @@ services:
     #   - 8080:80
     restart: unless-stopped
     depends_on:
-      - jackett
+      # - jackett
       - jellyfin
       - jellyseerr
       - prowlarr
@@ -28,21 +28,21 @@ services:
     #   - 8191:8191
     restart: unless-stopped
 
-  jackett:
-    image: lscr.io/linuxserver/jackett:latest
-    container_name: jackett
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=${TIMEZONE:-Etc/UTC}
-      - AUTO_UPDATE=true #optional
-      - RUN_OPTS= #optional
-    volumes:
-      - ${JACKETT_CONFIG}:/config
-      - ${JACKETT_DOWNLOADS}:/data/downloads
-    # ports:
-    #   - 9117:9117
-    restart: unless-stopped
+  # jackett:
+  #   image: lscr.io/linuxserver/jackett:latest
+  #   container_name: jackett
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=${TIMEZONE:-Etc/UTC}
+  #     - AUTO_UPDATE=true #optional
+  #     - RUN_OPTS= #optional
+  #   volumes:
+  #     - ${JACKETT_CONFIG}:/config
+  #     - ${JACKETT_DOWNLOADS}:/data/downloads
+  #   # ports:
+  #   #   - 9117:9117
+  #   restart: unless-stopped
 
   jellyfin:
     image: lscr.io/linuxserver/jellyfin:latest
@@ -59,11 +59,11 @@ services:
       - ${DOWNLOADS}:/downloads
       - ${RADARR_MOVIES}:/movies #optional
       - ${SONARR_TVSHOWS}:/tv #optional
-    # ports:
+    ports:
     #   - 8096:8096
-    #   - 8920:8920 #optional
-    #   - 7359:7359/udp #optional
-    #   - 1900:1900/udp #optional
+      - 8920:8920 #optional
+      - 7359:7359/udp #optional
+      - 1900:1900/udp #optional
     restart: unless-stopped
 
   jellyseerr:
@@ -79,6 +79,40 @@ services:
     volumes:
       - ${JELLYSEERR_CONFIG}:/app/config
     restart: unless-stopped
+
+  # plex:
+  #   image: lscr.io/linuxserver/plex:latest
+  #   container_name: plex
+  #   # network_mode: host
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=${TIMEZONE:-Etc/UTC}
+  #     - VERSION=docker
+  #     - PLEX_CLAIM= #optional
+  #     - VIRTUAL_HOST=${PLEX_VIRTUAL_HOST}
+  #     - VIRTUAL_PORT=${PLEX_VIRTUAL_POST:-32400}
+  #   volumes:
+  #     - ${PLEX_CONFIG}:/config
+  #     # - ${JELLYFIN_TVSHOWS}:/tv
+  #     # - ${JELLYFIN_MOVIES}:/movies
+  #     - ${JELLYFIN_TVSHOWS}:/data/tvshows
+  #     - ${JELLYFIN_MOVIES}:/data/movies
+  #     - ${DOWNLOADS}:/downloads
+  #     - ${RADARR_MOVIES}:/movies #optional
+  #     - ${SONARR_TVSHOWS}:/tv #optional
+  #   ports:
+  #     - 32400:32400 # web UI
+  #     # - 1900:1900 #bind: An attempt was made to access a socket in a way forbidden by its access permissions.
+  #     # - 3005:3005
+  #     - 8324:8324
+  #     - 5353:5353
+  #     - 32410:32410
+  #     - 32412:32412
+  #     - 32413:32413
+  #     - 32414:32414
+  #     - 32469:32469
+  #   restart: unless-stopped
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
@@ -103,6 +137,10 @@ services:
     volumes:
       - ${RADARR_CONFIG}:/config
       - ${RADARR_MOVIES}:/movies #optional
+      - ${RADARR_MOVIES2}:/movies2 #optional
+      - ${RADARR_MOVIES3}:/movies3 #optional
+      # - ${RADARR_MOVIES4}:/movies4 #optional
+      # - ${RADARR_MOVIES5}:/movies5 #optional
       - ${DOWNLOADS}:/downloads #optional
     # ports:
     #   - 7878:7878
@@ -118,6 +156,10 @@ services:
     volumes:
       - ${SONARR_CONFIG}:/config
       - ${SONARR_TVSHOWS}:/tv #optional
+      - ${SONARR_TVSHOWS2}:/tv2 #optional
+      - ${SONARR_TVSHOWS3}:/tv3 #optional
+      - ${SONARR_TVSHOWS4}:/tv4 #optional
+      - ${SONARR_TVSHOWS5}:/tv5 #optional
       - ${DOWNLOADS}:/downloads #optional
     # ports:
     #   - 8989:8989
@@ -125,5 +167,5 @@ services:
 
 networks:
   default:
-    name: ${PROXY_NETWORK:-media-stack}
+    name: ${PROXY_NETWORK:-proxy-network}
     external: true
